@@ -1,0 +1,52 @@
+4.4 Limiting the Bucket Quota
+Bucket quotas can be configured for users or specified buckets, which will be practiced in
+this exercise separately.
+Step 1 Limit quotas for users.
+Enable the quota limit for the swift user.
+[ceph: root@ceph01 /]# radosgw-admin quota enable --quota-scope=user --uid=swift
+Set the maximum number of objects that can be uploaded by the swift user to 3.
+[ceph: root@ceph01 /]# radosgw-admin quota set --quota-scope=user --uid=swift --max-objects=3
+Then, check whether the configurations take effect.
+[ceph: root@ceph01 /]# radosgw-admin user info --uid=swift
+
+Run the upload command on the client to test the quota limit. When the third file is
+uploaded, the client receives an error message.
+
+To cancel the limit on the object quantity quota, set --max-objects to -1.
+[ceph: root@ceph01 /]# radosgw-admin quota set --quota-scope=user --uid=swift --max-objects=-1
+Then, upload the third object again on the client. The upload is successful. The details are
+as follows:
+[root@client ~]# swift -A http://192.168.0.21:8080/auth/1.0 -U "swift:swift_rgw" -K
+mtCMEbogngZZ1578VTPjcr8bXjsb61mso4ODx5E7 upload --object-name hosts3 test /etc/hosts --
+insecure
+hosts3
+⚫ Question: In addition to setting the number of objects, are there any other methods
+for limiting quotas?
+⚫ Answer: Yes, the maximum upload capacity can be limited as well. This method is
+demonstrated in limiting quotas for buckets.
+
+
+Step 2 Limit quotas for buckets.
+Enable the quota limit for the test bucket.
+[ceph: root@ceph01 /]# radosgw-admin quota enable --quota-scope=bucket --bucket=test
+Set the maximum capacity of the test bucket to 10 MB.
+
+[ceph: root@ceph01 /]# radosgw-admin quota set --quota-scope=bucket --bucket=test --maxsize=10M
+
+
+
+Check the changes have been applied.
+[ceph: root@ceph01 /]# radosgw-admin bucket stats
+
+
+
+Create a 6 MB file on the client to test the quota limit.
+[root@client ~]# dd if=/dev/zero of=file bs=1M count=6
+
+
+Upload the file to the test container (bucket). When the second file is uploaded, the
+system returns an error message.
+
+
+
+
