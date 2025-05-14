@@ -1,0 +1,40 @@
+Step 1 Install Swift on the client.
+Run the following command to install Swift on the client:
+[root@client ~]# yum install -y python-setuptools python-pip
+
+[root@client ~]# pip install --upgrade python-swiftclient
+
+
+Check whether the Swift client is successfully installed or not.
+[root@client ~]# swift --version
+
+
+Step 2 Authenticate the user.
+Use the user created in Step 5 in section 4.2 to connect to Ceph and run the following
+command to check whether the user name and key are available:
+[root@client ~]# swift -A http://192.168.0.21:8080/auth/1.0 -U "swift:swift_rgw" -K
+mtCMEbogngZZ1578VTPjcr8bXjsb61mso4ODx5E7 stat -v --insecure
+
+Step 3 Use Swift to perform basic object operations.
+Create a container (bucket) test using Swift.
+[root@client ~]# swift -A http://192.168.0.21:8080/auth/1.0 -U "swift:swift_rgw" -K
+mtCMEbogngZZ1578VTPjcr8bXjsb61mso4ODx5E7 post test --insecure
+
+Run the following command to display the new container (bucket):
+[root@client ~]# swift -A http://192.168.0.21:8080/auth/1.0 -U "swift:swift_rgw" -K
+mtCMEbogngZZ1578VTPjcr8bXjsb61mso4ODx5E7 list --insecure
+
+Upload the /etc/hosts file on the client to the test container (bucket) and name the file
+hosts:
+
+[root@client ~]# swift -A http://192.168.0.21:8080/auth/1.0 -U "swift:swift_rgw" -K
+mtCMEbogngZZ1578VTPjcr8bXjsb61mso4ODx5E7 upload --object-name hosts test /etc/hosts -v --
+insecure
+
+Check whether the upload is complete.
+[root@client ~]# swift -A http://192.168.0.21:8080/auth/1.0 -U "swift:swift_rgw" -K
+mtCMEbogngZZ1578VTPjcr8bXjsb61mso4ODx5E7 list test -v --insecure
+
+
+
+
