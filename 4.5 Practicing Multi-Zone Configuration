@@ -1,0 +1,121 @@
+4.5 Practicing Multi-Zone Configuration
+Upgrade the object storage created in Section 4.2 to the multisite architecture. The
+following figure shows the architecture.
+
+Step 1 In the master zone, create a system user.
+Create a system user for synchronizing data.
+[ceph: root@ceph01 /]# radosgw-admin user create --uid=system-user --display-name=system-user --
+access-key=Huawei@123 --secret=Huawei12#$ --system
+
+
+Bind the created system user to the master zone.
+[ceph: root@ceph01 /]# radosgw-admin zone modify --rgw-realm=for_swift --rgwzonegroup=for_swift --rgw-zone=for_swift --endpoints 'http://ceph01:8080,http://ceph02:8080' --
+access-key=Huawei@123 --secret=Huawei12#$ --master --default
+
+nazanm chya bas la rasmaka habw
+radosgw-admin zone modify --rgw-realm=for_swift
+
+
+Step 2 In the master zone, configure the RGW.
+Run the following command to display the RGW information:
+[ceph: root@ceph01 /]# ceph orch ps | grep rgw
+
+Set the RGW information.
+[ceph: root@ceph01 /]# ceph config set client.rgw.for_swift.ceph01.cjavrh rgw_realm for_swift
+[ceph: root@ceph01 /]# ceph config set client.rgw.for_swift.ceph01.cjavrh rgw_zonegroup for_swift
+[ceph: root@ceph01 /]# ceph config set client.rgw.for_swift.ceph01.cjavrh rgw_zone for_swift
+[ceph: root@ceph01 /]# ceph config set client.rgw.for_swift.ceph02.gfipgo rgw_realm for_swift
+[ceph: root@ceph01 /]# ceph config set client.rgw.for_swift.ceph02.gfipgo rgw_zonegroup for_swift
+[ceph: root@ceph01 /]# ceph config set client.rgw.for_swift.ceph02.gfipgo rgw_zone for_swift
+
+
+Step 3 In the master zone, commit the configuration.
+Run the following command to commit the configuration:
+[ceph: root@ceph01 /]# radosgw-admin period update --commit
+
+Step 4 In the master zone, restart the RGW.
+Run the following command to restart the RGW.
+[ceph: root@ceph01 /]# ceph orch restart rgw.for_swift
+
+Step 5 Deploy Cluster2.
+Apply for another two ECSs with the same configurations as the cluster. Then, install and
+initialize the Ceph cluster. During host domain name resolution, the hosts file must
+contain all hosts in Cluster1 and Cluster2. In addition, you need to add information about
+the hosts in Cluster2 to the hosts file in Cluster1.
+
+
+Step 6 In the secondary zone, pull the realm configuration of the master zonegroup.
+Run the following command to pull the realm configuration information of the master
+zonegroup
+[ceph: root@ceph11 /]# radosgw-admin realm pull --url=http://192.168.0.21:8080 --accesskey=Huawei@123 --secret=Huawei12#$
+
+
+Check whether the realm and zonegroup information is obtained.
+[ceph: root@ceph11 /]# radosgw-admin realm list
+[ceph: root@ceph11 /]# radosgw-admin zonegroup list
+
+
+Step 7 In the secondary zone, obtain the period.
+Run the following command to obtain the period information:
+[ceph: root@ceph11 /]# radosgw-admin period pull --url=http://192.168.0.21:8080 --accesskey=Huawei@123 --secret=Huawei12#$
+
+Check whether the obtained information is correct.
+[ceph: root@ceph11 /]# radosgw-admin period list
+
+
+
+Step 8 In the secondary zone, create a non-master zone.
+[ceph: root@ceph11 /]# radosgw-admin zone create --rgw-zonegroup=for_swift --rgwzone=for_swift_backup --endpoints "http://ceph11:8080, http://ceph12:8080" --accesskey=Huawei@123 --secret=Huawei12#$
+
+
+
+Step 9 In the secondary zone, create an RGW.
+Run the following command to create an RGW:
+[ceph: root@ceph11 /]# ceph orch apply rgw for_swift --realm=for_swift --zone=for_swift_backup --
+placement="2" --port=8080
+
+Step 10 In the secondary zone, set the RGW information.
+Run the following command to set the RGW information:
+[ceph: root@ceph11 /]# ceph config set client.rgw.for_swift.ceph11.ykrfbf rgw_realm for_swift
+[ceph: root@ceph11 /]# ceph config set client.rgw.for_swift.ceph11.ykrfbf rgw_zonegroup for_swift
+[ceph: root@ceph11 /]# ceph config set client.rgw.for_swift.ceph11.ykrfbf rgw_zone for_swift_backup
+[ceph: root@ceph11 /]# ceph config set client.rgw.for_swift.ceph12.rhraxx rgw_realm for_swift
+[ceph: root@ceph11 /]# ceph config set client.rgw.for_swift.ceph12.rhraxx rgw_zonegroup for_swift
+[ceph: root@ceph11 /]# ceph config set client.rgw.for_swift.ceph12.rhraxx rgw_zone for_swift_backup
+
+
+Step 11 In the secondary zone, update the realm.
+Run the following command to update the realm:
+[ceph: root@ceph11 /]# radosgw-admin period update --rgw-realm=for_swift --commit
+
+
+Step 12 In the secondary zone, restart the RGW daemon.
+Run the following command to restart the RGW.
+[ceph: root@ceph01 /]# ceph orch restart rgw.for_swift
+
+
+Step 13 Perform a test.
+In the secondary zone, check whether the bucket in the master zone is synchronized.
+Run the following command to display detailed information about the data
+synchronization:
+[ceph: root@ceph11 /]# radosgw-admin sync status
+
+
+Step 14 Perform a data synchronization test.
+On the client, run the following command to upload an object named ceph11 to
+for_swift_backup:
+[root@client ~]# swift -A http://192.168.0.31:8080/auth/1.0 -U "swift:swift_rgw" -K
+mtCMEbogngZZ1578VTPjcr8bXjsb61mso4ODx5E7 upload --object-name ceph11 test /etc/hosts -v --
+insecure
+In Cluster1, check whether ceph11 is synchronized. The details are as follows:
+[ceph: root@ceph01 /]# radosgw-admin bucket radoslist
+
+
+
+Or, run the swift command to check whether ceph11 exists in the for_swift zone.
+[root@client ~]# swift -A http://192.168.0.21:8080/auth/1.0 -U "swift:swift_rgw" -K
+mtCMEbogngZZ1578VTPjcr8bXjsb61mso4ODx5E7 list test --insecure
+
+
+
+
