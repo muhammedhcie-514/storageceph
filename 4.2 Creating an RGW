@@ -1,0 +1,43 @@
+4.2 Creating an RGW
+Create an RGW and define related resources such as realms and zones as for_swift.
+Step 1 Create a realm.
+Run the following command to create realm for_swift:
+[ceph: root@ceph01 /]# radosgw-admin realm create --rgw-realm=for_swift --default
+
+
+
+Step 2 Create a zonegroup.
+Run the following command to create zonegroup for_swift and set it as the master
+zonegroup:
+[ceph: root@ceph01 /]# radosgw-admin zonegroup create --rgw-realm=for_swift --rgwzonegroup=for_swift --master --default
+
+
+Step 3 Create a zone.
+Run the following command to create realm for_swift:
+[ceph: root@ceph01 /]# radosgw-admin zone create --rgw-realm=for_swift --rgwzonegroup=for_swift --rgw-zone=for_swift --master --default
+
+
+
+Run the command to ensure the changes are applied.
+[ceph: root@ceph01 /]# radosgw-admin period update --rgw-realm=for_swift --commit
+
+
+Step 4 Create an RGW.
+Create two RGW instances and associate them with for_swift:
+[ceph: root@ceph01 /]# ceph orch apply rgw for_swift --realm=for_swift --zone=for_swift --
+placement="2" --port=8080
+
+
+
+Step 5 Create a user.
+Run the following command to create the swift user:
+[ceph: root@ceph01 /]# radosgw-admin user create --uid=swift --display-name=swift
+
+
+Generate a key that can be used by Swift for the created sub-user:
+[ceph: root@ceph01 /]# radosgw-admin key create --subuser=swift:swift_rgw --key-type=swift --gensecret
+
+After the configuration is complete, record the generated key, which will be used for
+authentication.
+
+
